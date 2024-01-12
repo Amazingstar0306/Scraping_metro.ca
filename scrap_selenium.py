@@ -45,9 +45,10 @@ class Metro_Scraper:
 
     def scrape_website(self):
         url = "https://www.metro.ca/en/online-grocery/search"
+        
         self.run_browser(url)
         try:
-            accept_btn = WebDriverWait(self.driver, 20).until(EC.presence_of_element_located((By.XPATH, '//button[@id="onetrust-accept-btn-handler"]')))
+            accept_btn = WebDriverWait(self.driver, 3).until(EC.presence_of_element_located((By.XPATH, '//button[@id="onetrust-accept-btn-handler"]')))
         except:
             p = "accpt_button"
         try:
@@ -56,15 +57,18 @@ class Metro_Scraper:
             p = "accept_buuton.click"
         page_count = 1
         while True:
+            
             print(f"Scraping page: {page_count}")
             page_count =page_count + 1
             try:
-                product_divs = WebDriverWait(self.driver, 10).until(EC.presence_of_all_elements_located((By.XPATH, '//div[contains(@class, "default-product-tile")]')))
+                product_divs = WebDriverWait(self.driver, 1).until(EC.presence_of_all_elements_located((By.XPATH, './/div[contains(@class, "default-product-tile")]')))
                 pp = 0
+                
                 for product_div in product_divs :
                     # Get the current page source
                     # Scrape data from the current page
-                    wait = WebDriverWait(product_div, 10)
+                    url = self.driver.current_url
+                    wait = WebDriverWait(product_div, 0.1)
                     product_name =wait.until(EC.presence_of_element_located((By.XPATH, './/div[@class="head__title"]')))
                     p_name = product_name.text
                     try:
@@ -73,7 +77,7 @@ class Metro_Scraper:
                     except:
                         brand = ""
                     try:
-                        product_unit1 = wait.until(EC.presence_of_element_located((By.XPATH, './/span[contains(@class,"head__unit-details)"]')))
+                        product_unit1 = wait.until(EC.presence_of_element_located((By.XPATH, './/span[contains(@class,"head__unit-details")]')))
                         product_unit =product_unit1.text
                     except:
                         product_unit = ""
@@ -112,20 +116,21 @@ class Metro_Scraper:
                     print(f"No : {pp} , product name: {p_name}")
                     product_info = [brand, p_name, product_unit, price, pricing_unit, secondary_price, before_price, date, img_url, url]
                     self.products.append(product_info)
+                    qq = 0
             except:
                 p = "products_div"
             # ...
         
             flag = 0
             try:# Click the pagination button to navigate to the next page
-                end_page = accept_btn = WebDriverWait(self.driver, 20).until(EC.presence_of_element_located((By.XPATH,'//div[contains(@class,"img-arrow-right")]/parent::a[contains(@class,"ppn--element corner disabled")]')))
+                end_page = accept_btn = WebDriverWait(self.driver, 1).until(EC.presence_of_element_located((By.XPATH,'//div[contains(@class,"img-arrow-right")]/parent::a[contains(@class,"ppn--element corner disabled")]')))
             except:
                 flag = 1
             if (flag == 0):
                 print(f"total page count: {page_count-1}")
                 break
             try:
-                a_element = accept_btn = WebDriverWait(self.driver, 20).until(EC.presence_of_element_located((By.XPATH,'//div[contains(@class,"img-arrow-right")]/parent::a[contains(@class,"ppn--element corner")]')))
+                a_element = accept_btn = WebDriverWait(self.driver, 1).until(EC.presence_of_element_located((By.XPATH,'//div[contains(@class,"img-arrow-right")]/parent::a[contains(@class,"ppn--element corner")]')))
             except:
                 p = "a_element"
             # Click on the <a> tag
@@ -136,18 +141,18 @@ class Metro_Scraper:
         
             # Wait until the next page has loaded
             try:
-                wait = WebDriverWait(self.driver, 10)
+                wait = WebDriverWait(self.driver, 1)
                 wait.until(EC.staleness_of(a_element))
             except:
                 p = "a_element_await"
         
             # Check if the next page has loaded or if it's the last page
         self.driver.quit()
-        print(f"except: {p}")
+        
         return 
     
     def save_to_csv(self):
-        with open('metro_products.csv', 'w', newline='') as f:
+        with open('metro_products.csv', 'w',encoding='utf-8', newline='') as f:
             writer = csv.writer(f)
             writer.writerow(['Brand', 'Product Name', 'Product Unit', 'Product Price', 'Pricing Unit', 'Secondary Price', 'Before Price', 'Valid Date', 'Image URL', 'Page URL'])
             writer.writerows(self.products)
